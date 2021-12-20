@@ -17,6 +17,7 @@ import { loadAccountDetails, calculateUserBondDetails, calculateUserTokenDetails
 import { calcBondDetails } from "./store/slices/bond-slice";
 import { loadAppDetails } from "./store/slices/app-slice";
 import { calcWrapPrice, calcWrapDetails} from "./store/slices/wrap-slice";
+import { CircularProgress } from "@material-ui/core";
 
 export default () => {
   const dispatch = useDispatch();
@@ -119,12 +120,7 @@ export default () => {
     }
   }, [connected]);
 
-  if (isAppLoading) return (<Progress
-    theme="success"
-    style={{ height: "5px" }}
-    className="mb-3"
-    value={40}
-  />);
+  if (isAppLoading) return <CircularProgress/>
 
   return (
     <div>

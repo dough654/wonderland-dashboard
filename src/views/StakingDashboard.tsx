@@ -5,6 +5,7 @@ import { IAppSlice } from "../store/slices/app-slice";
 import PropTypes from "prop-types";
 import { Container, Row, Col } from "shards-react";
 import { trim } from "../helpers";
+import { getTokenPrice } from '../helpers/token-price'
 
 import PageTitle from "../components/common/PageTitle";
 import SmallStats from "../components/common/SmallStats";
@@ -66,12 +67,12 @@ const StakingDashboard = ({ smallStats }) => {
 
   console.log('memo balance', trimmedWMemoBalance)
 
-  const stats = (label, value, data, borderColor, backgroundColor) => ({
+  const stats = (label, value, data, percentage, increase, borderColor, backgroundColor) => ({
     label,
     value,
-    percentage: "4.7%",
-    increase: true,
-    decrease: false,
+    percentage,
+    increase,
+    decrease: increase === null ? null : !increase,
     chartLabels: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
     attrs: { md: "6", sm: "6" },
     datasets: [
@@ -86,14 +87,21 @@ const StakingDashboard = ({ smallStats }) => {
     ]
   })
 
+  const timeHistory = getTokenPrice('TIME_HISTORY')
+  console.log('time history', timeHistory)
+
+  const lastChange = (array: number[]) => {
+    return `${((Math.abs(array.slice(-2)[0] - array.slice(-2)[1]) / array.slice(-2)[0]) * 100).toFixed(2)}%`
+  }
+
   const allStats = [
-    stats('TIME Price', Number(marketPrice).toFixed(2), [1, 2, 1, 3, 5, 4, 7, 1, 15, 10], "rgb(0, 184, 216)", "rgba(0, 184, 216, 0.1)"),
-    stats('TIME Balance', Number(timeBalance).toFixed(6), [1, 2, 1, 3, 5, 4, 7, 1, 15, 10], "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
-    stats('MEMO Balance', Number(memoBalance).toFixed(6), [1, 2, 1, 3, 5, 4, 7, 1, 15, 10], "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
-    stats('MEMO Value (USD)', Number(memoPrice).toFixed(2), [1, 2, 1, 3, 5, 4, 7, 1, 15, 10], "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
-    stats('Wrapped Memo Balance', Number(wmemoBalance).toFixed(6), [1, 2, 1, 3, 5, 4, 7, 1, 15, 10], "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
-    stats('Wrapped Memo Value (USD)', Number(wMemoPrice).toFixed(2), [1, 2, 1, 3, 5, 4, 7, 1, 15, 10], "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
-    stats('Exchange rate', Number(wrapPrice).toFixed(6), [1, 2, 1, 3, 5, 4, 7, 1, 15, 10], "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)")
+    stats('TIME Price', Number(marketPrice).toFixed(2), timeHistory.slice(-10), lastChange(timeHistory), true, "rgb(0, 184, 216)", "rgba(0, 184, 216, 0.1)"),
+    stats('TIME Balance', Number(timeBalance).toFixed(6), [], '', true, "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
+    stats('MEMO Balance', Number(memoBalance).toFixed(6), [], '', true, "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
+    stats('MEMO Value (USD)', Number(memoPrice).toFixed(2), [], '', true, "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
+    stats('Wrapped Memo Balance', Number(wmemoBalance).toFixed(6), [], '', true, "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
+    stats('Wrapped Memo Value (USD)', Number(wMemoPrice).toFixed(2), [], '', true, "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
+    stats('Exchange rate', Number(wrapPrice).toFixed(6), [], '', true, "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)")
   ]
 
   const marketPriceStats = {
@@ -119,27 +127,12 @@ const StakingDashboard = ({ smallStats }) => {
   return (<Container fluid className="main-content-container px-4">
     {/* Page Header */}
     <Row noGutters className="page-header py-4">
-      <PageTitle title="Blog Overview" subtitle="Dashboard" className="text-sm-left mb-3" />
+      <PageTitle title="TIME Staking Overview" subtitle="Dashboard" className="text-sm-left mb-3" />
     </Row>
 
     {/* Small Stats Blocks */}
     <Row>
-      {/* {smallStats.map((stats, idx) => (
-        <Col className="col-lg mb-4" key={idx} {...stats.attrs}>
-          <SmallStats
-            id={`small-stats-${idx}`}
-            variation="1"
-            chartData={stats.datasets}
-            chartLabels={stats.chartLabels}
-            label={stats.label}
-            value={stats.value}
-            percentage={stats.percentage}
-            increase={stats.increase}
-            decrease={stats.decrease}
-          />
-        </Col>
-      ))} */}
-      {allStats.map((stat, idx) => (
+      {allStats.slice(0, 4).map((stat, idx) => (
         <Col className="col-lg mb-4" key={idx}>
           <SmallStats
             id={`small-stats-${idx}`}
@@ -154,35 +147,27 @@ const StakingDashboard = ({ smallStats }) => {
           />
         </Col>
       ))}
-
     </Row>
 
     <Row>
-      {/* Users Overview */}
-      <Col lg="8" md="12" sm="12" className="mb-4">
-        <UsersOverview />
-      </Col>
-
-      {/* Users by Device */}
-      <Col lg="4" md="6" sm="12" className="mb-4">
-        <UsersByDevice />
-      </Col>
-
-      {/* New Draft */}
-      <Col lg="4" md="6" sm="12" className="mb-4">
-        <NewDraft />
-      </Col>
-
-      {/* Discussions */}
-      <Col lg="5" md="12" sm="12" className="mb-4">
-        <Discussions />
-      </Col>
-
-      {/* Top Referrals */}
-      <Col lg="3" md="12" sm="12" className="mb-4">
-        <TopReferrals />
-      </Col>
+      {allStats.slice(3, 7).map((stat, idx) => (
+        <Col className="col-lg mb-4" key={idx}>
+          <SmallStats
+            id={`small-stats-${idx}`}
+            variation="1"
+            chartData={stat.datasets}
+            chartLabels={stat.chartLabels}
+            label={stat.label}
+            value={stat.value}
+            percentage={stat.percentage}
+            increase={stat.increase}
+            decrease={stat.decrease}
+          />
+        </Col>
+      ))}
     </Row>
+
+    
   </Container>
   );
 }

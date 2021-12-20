@@ -3,6 +3,7 @@ import App from "./App";
 import { HashRouter } from "react-router-dom";
 import { loadTokenPrices } from "./helpers";
 import { Progress } from 'shards-react'
+import CircularProgress from "@material-ui/core/CircularProgress";
 
 
 function Root() {
@@ -12,13 +13,7 @@ function Root() {
         loadTokenPrices().then(() => setLoading(false));
     }, []);
 
-    if (loading) return (<Progress
-        theme="success"
-        style={{ height: "5px" }}
-        className="mb-3"
-        value={40}
-    />);
-
+    if (loading) return <CircularProgress/>
 
     return (
         <HashRouter>
