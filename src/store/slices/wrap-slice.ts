@@ -118,6 +118,7 @@ export interface IWrapDetails {
 }
 
 const calcWrapValue = async ({ isWrap, value, provider, networkID }: IWrapDetails): Promise<number> => {
+    console.log('calculating values')
     const addresses = getAddresses(networkID);
 
     const amountInWei = isWrap ? ethers.utils.parseUnits(value, "gwei") : ethers.utils.parseEther(value);
@@ -200,24 +201,34 @@ const wrapSlice = createSlice({
     extraReducers: builder => {
         builder
             .addCase(calcWrapDetails.pending, state => {
+                console.log('checking wrap details')
                 state.loading = true;
             })
             .addCase(calcWrapDetails.fulfilled, (state, action) => {
+                console.log('checking wrap details fulfilled')
+
                 setAll(state, action.payload);
                 state.loading = false;
             })
             .addCase(calcWrapDetails.rejected, (state, { error }) => {
+                console.log('checking wrap details rejected')
+
                 state.loading = false;
                 console.log(error);
             })
             .addCase(calcWrapPrice.pending, state => {
+                console.log('checking wrap price pending')
                 state.loading = true;
             })
             .addCase(calcWrapPrice.fulfilled, (state, action) => {
+                console.log('checking wrap price fulfilled')
+
                 setAll(state, action.payload);
                 state.loading = false;
             })
             .addCase(calcWrapPrice.rejected, (state, { error }) => {
+                console.log('checking wrap price rejected')
+
                 state.loading = false;
                 console.log(error);
             });
