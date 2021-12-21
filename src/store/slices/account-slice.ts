@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import { getAddresses } from "../../constants";
-import { TimeTokenContract, MemoTokenContract, MimTokenContract, wMemoTokenContract } from "../../abi";
+import { TimeTokenContract, MemoTokenContract, MimTokenContract, wMemoTokenContract, AbracadabraContract } from "../../abi";
 import { setAll } from "../../helpers";
 
 import { createSlice, createSelector, createAsyncThunk } from "@reduxjs/toolkit";
@@ -26,6 +26,7 @@ interface IAccountBalances {
 }
 
 export const getBalances = createAsyncThunk("account/getBalances", async ({ address, networkID, provider }: IGetBalances): Promise<IAccountBalances> => {
+    console.log('getting balances')
     const addresses = getAddresses(networkID);
 
     const memoContract = new ethers.Contract(addresses.MEMO_ADDRESS, MemoTokenContract, provider);
@@ -55,6 +56,8 @@ interface IUserAccountDetails {
         time: string;
         memo: string;
         wmemo: string;
+        abracadabra: string;
+        borrowedMIM: string;
     };
     staking: {
         time: number;
@@ -98,11 +101,44 @@ export const loadAccountDetails = createAsyncThunk("account/loadAccountDetails",
         wmemoBalance = await wmemoContract.balanceOf(address);
     }
 
+    const abracadabraContract = new ethers.Contract(addresses.ABRACADABRA_WMEMO_ADDRESS, AbracadabraContract, provider);
+    const abracadabraBalance = await abracadabraContract.userCollateralShare(address);
+    const abracadabraBorrowPart = ethers.utils.formatUnits(
+        (await abracadabraContract.userBorrowPart(address)).toString()
+    )
+
+    // console.log('abracadabra borrow part', abracadabraBorrowPart)
+
+    // const contractExchangeRate = await abracadabraContract.exchangeRate({
+    //     gasLimit: 300000,
+    // });
+
+    // console.log('contract exchange rate', contractExchangeRate)
+
+    // const tokenPrice = Number(ethers.utils.formatUnits(contractExchangeRate, 18))
+
+    // console.log('token price', tokenPrice)
+
+    // const ltv = 90
+    // const liquidationMultiplier = (200 - ltv) / 100;
+
+    // const liquidationPrice =
+    // ((Number(abracadabraBorrowPart) * tokenPrice) / abracadabraBalance) *
+    //   (1 / tokenPrice) *
+    //   liquidationMultiplier || 0;
+
+    // console.log('liquidation price', liquidationPrice)
+
     return {
         balances: {
             memo: ethers.utils.formatUnits(memoBalance, "gwei"),
             time: ethers.utils.formatUnits(timeBalance, "gwei"),
             wmemo: ethers.utils.formatEther(wmemoBalance),
+            abracadabra: ethers.utils.formatUnits(
+                abracadabraBalance.toString(),
+                18
+            ),
+            borrowedMIM: abracadabraBorrowPart
         },
         staking: {
             time: Number(stakeAllowance),
@@ -249,6 +285,8 @@ export interface IAccountSlice {
         memo: string;
         time: string;
         wmemo: string;
+        abracadabra: string;
+        borrowedMIM: string;
     };
     loading: boolean;
     staking: {
@@ -264,7 +302,7 @@ export interface IAccountSlice {
 const initialState: IAccountSlice = {
     loading: true,
     bonds: {},
-    balances: { memo: "", time: "", wmemo: "" },
+    balances: { memo: "", time: "", wmemo: "", abracadabra: '', borrowedMIM: '' },
     staking: { time: 0, memo: 0 },
     wrapping: { memo: 0 },
     tokens: {},

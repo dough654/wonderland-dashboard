@@ -24,6 +24,21 @@ const StakingDashboard = ({ smallStats }) => {
   const fiveDayRate = useSelector<IReduxState, number>(state => {
     return state.app.fiveDayRate;
   });
+  const marketCap = useSelector<IReduxState, number>(state => {
+    return state.app.marketCap;
+  });
+  const currentIndex = useSelector<IReduxState, string>(state => {
+    return state.app.currentIndex;
+  });
+  const runway = useSelector<IReduxState, number>(state => {
+    return state.app.runway;
+  });
+  const treasuryBalance = useSelector<IReduxState, number>(state => {
+    return state.app.treasuryBalance;
+  });
+  const stakingTVL = useSelector<IReduxState, number>(state => {
+    return state.app.stakingTVL;
+  });
   const timeBalance = useSelector<IReduxState, string>(state => {
     return state.account.balances && state.account.balances.time;
   });
@@ -53,6 +68,14 @@ const StakingDashboard = ({ smallStats }) => {
     return state.app.marketPrice;
   });
 
+  const abraBalance = useSelector<IReduxState, string>(state => {
+    return state.account.balances.abracadabra;
+  });
+
+  const borrowedMIM = useSelector<IReduxState, string>(state => {
+    return state.account.balances.borrowedMIM;
+  });
+
   const exchangeRate = 1 / wrapPrice;
   const wMemoPrice = Number(wmemoBalance) * exchangeRate * marketPrice;
   const memoPrice = Number(memoBalance) * marketPrice;
@@ -61,9 +84,11 @@ const StakingDashboard = ({ smallStats }) => {
   const trimmedMemoPrice = Number(memoPrice).toFixed(2);
   const trimmedWMemoBalance = trim(Number(wmemoBalance), 6);
   const trimmedWMemoPrice = Number(wMemoPrice).toFixed(2);
-  const trimmedStakingAPY = trim(stakingAPY * 100, 1);
-  const stakingRebasePercentage = trim(stakingRebase * 100, 4);
-  const nextRewardValue = trim((Number(stakingRebasePercentage) / 100) * Number(trimmedMemoBalance), 6);
+  const trimmedStakingAPY = `% ${trim(stakingAPY * 100, 2)}`;
+  const stakingRebasePercentage = `% ${trim(stakingRebase * 100, 4)}`
+  const nextRewardValue = trim((Number(stakingRebase) / 100) * Number(memoBalance), 6);
+  const trimmedFiveDayROI = `% ${Number(fiveDayRate * 100).toFixed(4)}`;
+  const abraBalanceUSD = Number(abraBalance) * exchangeRate * marketPrice;
 
   console.log('memo balance', trimmedWMemoBalance)
 
@@ -94,14 +119,37 @@ const StakingDashboard = ({ smallStats }) => {
     return `${((Math.abs(array.slice(-2)[0] - array.slice(-2)[1]) / array.slice(-2)[0]) * 100).toFixed(2)}%`
   }
 
-  const allStats = [
+  const bigFormat = number => Number(Number(number).toFixed(2)).toLocaleString('en-US')
+
+  const marketStats = [
+    // Row 1
     stats('TIME Price', Number(marketPrice).toFixed(2), timeHistory.slice(-10), lastChange(timeHistory), true, "rgb(0, 184, 216)", "rgba(0, 184, 216, 0.1)"),
+    stats('Market Cap (USD)', bigFormat(marketCap), [], '', true, "rgb(0, 184, 216)", "rgba(0, 184, 216, 0.1)"),
+    stats('Staking TVL (USD)', bigFormat(stakingTVL), [], '', true, "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
+    stats('Runway (days)', Number(runway).toFixed(2), [], '', true, "rgb(0, 184, 216)", "rgba(0, 184, 216, 0.1)"),
+
+    stats('Staking APY', trimmedStakingAPY, [], '', true, "rgb(0, 184, 216)", "rgba(0, 184, 216, 0.1)"),
+    stats('Next Rebase Percentage', stakingRebasePercentage, [], '', true, "rgb(0, 184, 216)", "rgba(0, 184, 216, 0.1)"),
+    stats('Five Day ROI', trimmedFiveDayROI, [], '', true, "rgb(0, 184, 216)", "rgba(0, 184, 216, 0.1)"),
+    stats('Current Index', Number(currentIndex).toFixed(2), [], '', true, "rgb(0, 184, 216)", "rgba(0, 184, 216, 0.1)"),
+  ];
+
+  const stakingStats = [
     stats('TIME Balance', Number(timeBalance).toFixed(6), [], '', true, "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
     stats('MEMO Balance', Number(memoBalance).toFixed(6), [], '', true, "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
     stats('MEMO Value (USD)', Number(memoPrice).toFixed(2), [], '', true, "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
     stats('Wrapped Memo Balance', Number(wmemoBalance).toFixed(6), [], '', true, "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
     stats('Wrapped Memo Value (USD)', Number(wMemoPrice).toFixed(2), [], '', true, "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
-    stats('Exchange rate', Number(wrapPrice).toFixed(6), [], '', true, "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)")
+    stats('Exchange rate (wMemo -> Memo)', Number(exchangeRate).toFixed(6), [], '', true, "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
+  ]
+
+  const abraStats = [
+    stats('Collateral Balance', Number(abraBalance).toFixed(6), [], '', true, "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
+    stats('Collateral Value (USD)', Number(abraBalanceUSD).toFixed(2), [], '', true, "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
+    stats('Total wMEMO Balance', (Number(abraBalance) + Number(wmemoBalance)).toFixed(6), [], '', true, "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
+    stats('Total wMEMO Value (USD)', (Number(abraBalanceUSD) + Number(wMemoPrice)).toFixed(2), [], '', true, "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
+
+    stats('Borrowed MIM', Number(borrowedMIM).toFixed(2), [], '', true, "rgb(6, 214, 160)", "rgba(6, 214, 160, 0.1)"),
   ]
 
   const marketPriceStats = {
@@ -127,12 +175,12 @@ const StakingDashboard = ({ smallStats }) => {
   return (<Container fluid className="main-content-container px-4">
     {/* Page Header */}
     <Row noGutters className="page-header py-4">
-      <PageTitle title="TIME Staking Overview" subtitle="Dashboard" className="text-sm-left mb-3" />
+      <PageTitle title="Market Data" subtitle="Dashboard" className="text-sm-left mb-3" />
     </Row>
 
     {/* Small Stats Blocks */}
     <Row>
-      {allStats.slice(0, 4).map((stat, idx) => (
+      {marketStats.slice(0, 4).map((stat, idx) => (
         <Col className="col-lg mb-4" key={idx}>
           <SmallStats
             id={`small-stats-${idx}`}
@@ -148,9 +196,8 @@ const StakingDashboard = ({ smallStats }) => {
         </Col>
       ))}
     </Row>
-
     <Row>
-      {allStats.slice(3, 7).map((stat, idx) => (
+      {marketStats.slice(4, 8).map((stat, idx) => (
         <Col className="col-lg mb-4" key={idx}>
           <SmallStats
             id={`small-stats-${idx}`}
@@ -166,8 +213,46 @@ const StakingDashboard = ({ smallStats }) => {
         </Col>
       ))}
     </Row>
-
-    
+    <Row noGutters className="page-header py-4">
+      <PageTitle title="Staking Info" subtitle="" className="text-sm-left mb-3" />
+    </Row>
+    <Row>
+      {stakingStats.slice(0, 6).map((stat, idx) => (
+        <Col className="col-lg mb-4" key={idx}>
+          <SmallStats
+            id={`small-stats-${idx}`}
+            variation="1"
+            chartData={stat.datasets}
+            chartLabels={stat.chartLabels}
+            label={stat.label}
+            value={stat.value}
+            percentage={stat.percentage}
+            increase={stat.increase}
+            decrease={stat.decrease}
+          />
+        </Col>
+      ))}
+    </Row>
+    <Row noGutters className="page-header py-4">
+      <PageTitle title="Abracadabra Position" subtitle="" className="text-sm-left mb-3" />
+    </Row>
+    <Row>
+      {abraStats.map((stat, idx) => (
+        <Col className="col-lg mb-4" key={idx}>
+          <SmallStats
+            id={`small-stats-${idx}`}
+            variation="1"
+            chartData={stat.datasets}
+            chartLabels={stat.chartLabels}
+            label={stat.label}
+            value={stat.value}
+            percentage={stat.percentage}
+            increase={stat.increase}
+            decrease={stat.decrease}
+          />
+        </Col>
+      ))}
+    </Row>
   </Container>
   );
 }
